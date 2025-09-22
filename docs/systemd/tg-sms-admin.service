@@ -1,0 +1,20 @@
+[Unit]
+Description=TG SMS Admin API Service
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/tg-sms-suite
+Environment=VENV_DIR=/opt/tg-sms-suite/.venv
+Environment=HOST=0.0.0.0
+Environment=PORT=8080
+Environment=LOG_DIR=/var/log/tg-sms-suite
+ExecStart=/opt/tg-sms-suite/scripts/run_admin.sh
+Restart=on-failure
+RestartSec=5
+User=tgsms
+Group=tgsms
+
+[Install]
+WantedBy=multi-user.target

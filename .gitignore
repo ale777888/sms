@@ -1,0 +1,14 @@
+.venv/
+data/
+__pycache__/
+*.pyc
+*.log
+.id_ed25519
+id_ed25519
+id_ed25519.pub
+*.db
+*.db-journal
+.DS_Store
+.mypy_cache/
+.pytest_cache/
+.env
