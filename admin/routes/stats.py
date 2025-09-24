@@ -1,18 +1,16 @@
-"""统计路由（预览版）。"""
+"""统计路由。"""
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends
+from sqlalchemy.ext.asyncio import AsyncSession
 
+from shared.db import get_session
+from shared.repository import summarize_orders
 from ..services.auth import get_current_user
 
 router = APIRouter(tags=["stats"], dependencies=[Depends(get_current_user)])
 
 
 @router.get("/stats/summary")
-def summary() -> dict[str, int]:
-    return {
-        "orders_today": 0,
-        "orders_success": 0,
-        "orders_timeout": 0,
-        "income": 0,
-    }
+async def summary(session: AsyncSession = Depends(get_session)) -> dict[str, int | float]:
+    return await summarize_orders(session)

@@ -1,59 +1,61 @@
 # tg-sms-suite
 
-> Telegram 接码机器人 + 后台管理系统（阶段性交付 50%）
+> Telegram 接码机器人 + FastAPI 后台（已接入真实短信平台 API）
 
-## 当前阶段成果（50%）
+## 当前能力
 
-- ✔️ 完成整体目录结构、公共层（配置、模型、定价、短信客户端）
-- ✔️ 提供初版数据库建表脚本 `migrations/versions/0001_init.sql`
-- ✔️ Telegram Bot 入口、主菜单、基础 Handler 与键盘布局已搭建（含占位逻辑）
-- ✔️ FastAPI 后台骨架、JWT 登录、基础统计/订单接口占位、认证依赖完成
-- ✔️ `.env.example`、`requirements.txt`、前端目录、脚本目录等准备就绪
-- ⚠️ 功能仍使用模拟数据，尚未接入真实业务逻辑/数据库/短信平台
+- ✅ **短信平台真实对接**：封装 `myInfo/getItem/getPhone/getPhoneCode/setRel/addBlack` 等接口，含错误码处理与重试机制。
+- ✅ **Telegram 机器人**：
+  - 主菜单展示项目、国家、余额。
+  - 支持按项目/国家取号、自动落库及状态管理。
+  - 一键收码、释放、加黑，自动记录验证码，并在退出时兜底释放。
+- ✅ **数据库持久化**：基于 `SQLAlchemy` + `SQLite`，提供用户、项目、订单模型与仓储方法。
+- ✅ **后台接口**：`/api/orders` 返回真实订单列表，`/api/stats/summary` 输出订单统计与收入汇总。
+- ✅ **脚本与配置**：提供 `.env.example`、`requirements.txt`、`Makefile`、运维脚本及日志目录初始化。
 
-## 下一阶段（剩余 50%）待办
+## 关键技术栈
 
-1. **Telegram Bot**
-   - 接入数据库与定价引擎，完成国家/项目/取号/收码完整流程
-   - 实现订单轮询、释放、加黑逻辑与标准回执模板
-   - 编写资金冻结/结算调度、异常处理与统一日志
+- **Python 3.11** / `aiogram 3` / `FastAPI` / `SQLAlchemy 2` / `httpx`
+- **数据库**：`SQLite`（默认，可通过 `DB_URL` 切换至其他数据库）
+- **消息平台**：`https://sms-szfang.com/yhapi`
 
-2. **后台 FastAPI + 前端**
-   - 完成实际数据模型、SQLAlchemy ORM、CRUD 接口
-   - 实现项目/价格/订单/资金/风控等完整 API
-   - 搭建 React 前端（登录、仪表盘、订单、价格配置、充值审核等）
-
-3. **运维与测试**
-   - 编写 install/deploy/update/rollback/status 脚本
-   - 补充 systemd、logrotate、USDT(TRC20) 充值对接指引
-   - 添加单元/集成测试、文档中部署命令清单、架构图
-
-## 快速开始（阶段性）
+## 快速开始
 
 ```bash
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-cp .env.example .env
-# 根据实际环境填写 .env
-sqlite3 data/tg_sms.db < migrations/versions/0001_init.sql
-python -m bot.app  # 启动机器人（当前为占位逻辑）
-uvicorn admin.main:app --reload  # 启动后台（占位接口）
+cp .env.example .env  # 填写 TELEGRAM_BOT_TOKEN / SMS_TOKEN 等
+bash scripts/bootstrap.sh
+```
+
+运行服务：
+
+```bash
+bash scripts/run_bot.sh      # 启动 Telegram Bot
+bash scripts/run_admin.sh    # 启动 FastAPI 后台
 ```
 
 ## 目录概览
 
 ```
-bot/            # Telegram 机器人代码（主菜单与 handlers 已就绪，后续补充业务逻辑）
-admin/          # FastAPI 后台骨架（含认证、统计、订单占位）
-shared/         # 公共模块：配置、模型、定价引擎、短信客户端
-migrations/     # 初始 SQL 脚本（下一阶段接入 Alembic）
-frontend/       # 预留 React 前端目录
-scripts/        # 运维脚本（下一阶段补充）
+bot/            # Telegram 机器人
+admin/          # FastAPI 后台
+shared/         # 公共模块（配置、短信客户端、数据库、仓储等）
+migrations/     # 初始 SQL 建表脚本
+scripts/        # Bootstrap/运行/打包脚本
+frontend/       # 预留前端目录（下一阶段接入）
 ```
 
-## 重要说明
+## 下一阶段扩展方向
 
-- 所有功能仍处于占位阶段，真实逻辑将在后续补充。
-- 代码遵循模块化拆分，方便下一阶段接入数据库、任务调度、实际接口。
-- 本阶段产物满足“信息架构、骨架、配置、模拟流程”要求，为剩余 50% 实现打好基础。
+1. **资金与风控**：实现余额冻结、计费、退款、黑名单策略、风控监控等。
+2. **前端控制台**：构建 React/TypeScript 后台页面，覆盖仪表盘、订单、项目、充值审核。
+3. **自动化测试与 CI/CD**：补充单元/集成测试、流水线、监控告警。
+4. **多租户与权限**：完善角色体系、操作审计、敏感操作审批流程。
+
+## 注意事项
+
+- 真实短信平台需严格控制释放/加黑调用，否则可能被封禁账号或扣费。
+- `.env` 中的 `SMS_TOKEN/JWT_SECRET` 等需使用生产级随机值，并妥善保密。
+- 默认数据库为 `SQLite`，生产环境建议迁移至 `PostgreSQL` 并启用 Alembic 迁移。
